@@ -55,7 +55,7 @@ const Chat = ({ socket, username, room }) => {
                   <div>
                     <div
                       className={`message-content w-auto h-auto min-h-[40px] max-w-[120px] rounded-md flex items-center px-2 py-2 break-words
-                        ${isYou ? "bg-green-700 text-white mr-1 ml-1 justify-start" : "bg-cornflowerblue text-white mr-1 ml-1 justify-end"}
+                        ${isYou ? "bg-green-700 text-white mr-1 ml-1 justify-start" : "bg-blue-400 text-white mr-1 ml-1 justify-end"}
                       `}
                     >
                       <p className="w-full break-words">{messageContent.message}</p>
