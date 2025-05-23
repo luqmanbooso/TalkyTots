@@ -79,6 +79,55 @@ const io = new Server(server, {
     }
 })
 
+app.set('io', io);
+
+// --- Now define your API routes, including PATCH/DELETE for message editing/deleting ---
+
+// Edit a message
+app.patch('/api/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.id);
+    if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
+    if (message.sender.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+    message.content = req.body.content;
+    await message.save();
+
+    // Use the io instance from app
+    req.app.get('io').to(message.room.toString()).emit('message_edited', {
+      _id: message._id,
+      content: message.content
+    });
+
+    res.json({ success: true, message });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Delete a message
+app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.id);
+    if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
+    if (message.sender.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+    const roomId = message.room.toString();
+    await message.remove();
+
+    // Use the io instance from app
+    req.app.get('io').to(roomId).emit('message_deleted', {
+      _id: message._id
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 io.on("connection", (socket)=>{
     console.log(`user connected: ${socket.id}`);
 
