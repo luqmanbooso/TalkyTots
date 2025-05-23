@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import io from "socket.io-client";
 import AuthPage from "./components/AuthPage";
 import Chat from "./Chat";
 import RoomList from "./components/RoomList";
 
+// Initialize the socket connection only once, outside of the component scope
 const socket = io.connect("http://localhost:3001");
 
 // Route protection HOC
@@ -37,8 +44,8 @@ function AppContent() {
     fetch("http://localhost:3001/api/rooms", {
       headers: { Authorization: `Bearer ${user.token}` },
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success) setRooms(data.rooms);
       });
   }, [user]);
@@ -56,22 +63,27 @@ function AppContent() {
   }, [activeRoom]);
 
   // Create a new room
-  const handleCreateRoom = async name => {
+  const handleCreateRoom = async (name) => {
     if (!user) return;
     const res = await fetch("http://localhost:3001/api/rooms", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
       body: JSON.stringify({ name }),
     });
     const data = await res.json();
     if (data.success) {
-      setRooms(rms => rms.some(r => r._id === data.room._id) ? rms : [...rms, data.room]);
+      setRooms((rms) =>
+        rms.some((r) => r._id === data.room._id) ? rms : [...rms, data.room]
+      );
       setActiveRoom(data.room);
     }
   };
 
   // Select a room from the sidebar
-  const handleSelectRoom = room => setActiveRoom(room);
+  const handleSelectRoom = (room) => setActiveRoom(room);
 
   // Logout: clear all persistent info and redirect to login
   const handleLogout = () => {
@@ -96,7 +108,7 @@ function AppContent() {
         path="/chat"
         element={
           <ProtectedRoute user={user}>
-            <div className="min-h-screen flex">
+            <div className="min-h-screen flex bg-gradient-to-br from-[#e3f7ee] via-[#f7fafc] to-[#d2f1fc]">
               <RoomList
                 token={user?.token}
                 rooms={rooms}
@@ -105,11 +117,13 @@ function AppContent() {
                 onCreateRoom={handleCreateRoom}
               />
               <div className="flex-1 flex flex-col h-screen">
-                <div className="p-3 bg-green-800 text-white flex justify-between">
-                  <span>Welcome, {user?.username}</span>
+                <div className="p-3 bg-gradient-to-r from-[#0088cc] to-[#5bc6e5] text-white flex justify-between items-center shadow">
+                  <span className="font-semibold drop-shadow">
+                    Welcome, {user?.username}
+                  </span>
                   <button
                     onClick={handleLogout}
-                    className="bg-green-600 px-4 py-1 rounded font-semibold hover:bg-green-700"
+                    className="bg-gradient-to-r from-[#0088cc] to-[#5bc6e5] px-5 py-2 rounded-xl font-bold shadow text-white hover:from-[#007ab8] hover:to-[#30b2e2] active:scale-95 transition-all"
                   >
                     Logout
                   </button>
@@ -124,7 +138,7 @@ function AppContent() {
                     onLeave={() => setActiveRoom(null)}
                   />
                 ) : (
-                  <div className="flex-1 flex items-center justify-center bg-green-50 text-xl text-green-800">
+                  <div className="flex-1 flex items-center justify-center bg-green-50 text-xl text-green-800 font-bold">
                     Select or create a room to start chatting!
                   </div>
                 )}
@@ -136,7 +150,11 @@ function AppContent() {
       <Route
         path="/"
         element={
-          user ? <Navigate to="/chat" replace /> : <Navigate to="/login" replace />
+          user ? (
+            <Navigate to="/chat" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
     </Routes>
