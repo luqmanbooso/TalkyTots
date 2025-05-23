@@ -106,7 +106,7 @@ app.patch('/api/messages/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Delete a message
+// Soft-delete a message (change content and mark as deleted)
 app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
     const message = await Message.findById(req.params.id);
@@ -114,16 +114,20 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
     if (message.sender.toString() !== req.user.userId) {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
-    const roomId = message.room.toString();
-    await message.remove();
+    message.content = "Message deleted";
+    message.deleted = true; // Add this field to your Message schema if you want
+    await message.save();
 
-    // Use the io instance from app
-    req.app.get('io').to(roomId).emit('message_deleted', {
-      _id: message._id
+    // Emit update
+    req.app.get('io').to(message.room.toString()).emit('message_deleted', {
+      _id: message._id,
+      content: message.content,
+      deleted: true,
     });
 
-    res.json({ success: true });
+    res.json({ success: true, message });
   } catch (err) {
+    console.error("Soft delete message error ", err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

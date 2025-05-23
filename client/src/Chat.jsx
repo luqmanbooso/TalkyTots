@@ -73,10 +73,11 @@ const Chat = ({ socket, username, room, roomId, token, onLeave }) => {
       );
     });
     socket.on("message_deleted", (data) => {
+      console.log("Received message_deleted", data);
       setMessageList((list) =>
         list.map((msg) =>
           msg._id === data._id
-            ? { ...msg, message: "Message deleted", deleted: true }
+            ? { ...msg, message: data.content, deleted: data.deleted }
             : msg
         )
       );
